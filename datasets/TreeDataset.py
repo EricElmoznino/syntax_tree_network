@@ -18,12 +18,15 @@ class TreeDataset(Dataset):
         self.labels = self.read_labels(os.path.join(data_dir, 'labels.txt'))
 
         self.word_embeddings = word_embeddings
-        self.rule_map, self.non_terminal_map, self.terminal_map = self.scan_dataset()
+        self.nonterminal_rule_map, self.terminal_rule_map, self.nonterminal_map, self.terminal_map = self.scan_dataset()
 
         if self.word_embeddings is not None:
             self.input_size = len(word_embeddings[list(word_embeddings.keys())[0]])
         else:
             self.input_size = len(self.terminal_map)
+        self.num_nonterminal_rules = len(self.nonterminal_rule_map)
+        self.num_terminal_rules = len(self.terminal_rule_map)
+        self.num_nonterminals = len(self.nonterminal_map)
 
     def __len__(self):
         return len(self.epoch_batches)
@@ -31,7 +34,8 @@ class TreeDataset(Dataset):
     def __getitem__(self, item):
         batch_indices = self.epoch_batches[item]
         trees = [self.trees[i] for i in batch_indices]
-        tree_tensor = TreeTensor(trees, self.rule_map, self.non_terminal_map, self.terminal_map, self.word_embeddings)
+        tree_tensor = TreeTensor(trees, self.nonterminal_rule_map, self.terminal_rule_map,
+                                 self.nonterminal_map, self.terminal_map, self.word_embeddings)
         label = [self.label_tensor(self.labels[i]) for i in batch_indices]
         label = torch.stack(label)
         return tree_tensor, label
@@ -72,24 +76,28 @@ class TreeDataset(Dataset):
         random.shuffle(self.epoch_batches)
 
     def scan_dataset(self):
-        unique_rules = set()
-        unique_non_terminals = set()
+        unique_nonterminal_rules = set()
+        unique_terminal_rules = set()
+        unique_nonterminals = set()
         unique_terminals = set() if self.word_embeddings is None else None
         for tree in self.trees:
-            for r in tree.all_rules():
-                unique_rules.add(r)
-            for nt in tree.all_non_terminals():
-                unique_non_terminals.add(nt)
+            for r in tree.all_nonterminal_rules():
+                unique_nonterminal_rules.add(r)
+            for r in tree.all_terminal_rules():
+                unique_terminal_rules.add(r)
+            for nt in tree.all_nonterminals():
+                unique_nonterminals.add(nt)
             if self.word_embeddings is None:
                 for t in tree.all_terminals():
                     unique_terminals.add(t)
-        rule_map = {r: i for i, r in enumerate(list(unique_rules))}
-        non_terminal_map = {nt: i for i, nt in enumerate(list(unique_non_terminals))}
+        nonterminal_rule_map = {r: i for i, r in enumerate(list(unique_nonterminal_rules))}
+        terminal_rule_map = {r: i for i, r in enumerate(list(unique_terminal_rules))}
+        nonterminal_map = {nt: i for i, nt in enumerate(list(unique_nonterminals))}
         if self.word_embeddings is None:
             terminal_map = {t: i for i, t in enumerate(list(unique_terminals))}
         else:
             terminal_map = None
-        return rule_map, non_terminal_map, terminal_map
+        return nonterminal_rule_map, terminal_rule_map, nonterminal_map, terminal_map
 
     def read_labels(self, label_path):
         raise NotImplementedError()
@@ -100,28 +108,36 @@ class TreeDataset(Dataset):
 
 class TreeTensor:
 
-    def __init__(self, trees, rule_map, non_terminal_map, terminal_map, word_embeddings=None):
+    def __init__(self, trees, nonterminal_rule_map, terminal_rule_map,
+                 nonterminal_map, terminal_map, word_embeddings=None):
         assert isinstance(trees, list)
         ref = trees[0]
         if ref.is_terminal:
             self.is_terminal = True
+            self.is_preterminal = False
             self.children = None
             self.rule = None
             if word_embeddings is None:
                 terminals = torch.LongTensor([terminal_map[tree.node] for tree in trees])
-                terminals = one_hot(terminals, num_classes=len(terminal_map))
+                terminals = one_hot(terminals, num_classes=len(terminal_map)).float()
             else:
                 terminals = torch.stack([torch.FloatTensor(word_embeddings[tree.node]) for tree in trees])
             self.node = terminals
         else:
             self.is_terminal = False
-            self.rule = rule_map[ref.rule]
-            self.node = non_terminal_map[ref.node]
+            self.node = nonterminal_map[ref.node]
             self.children = []
             for i in range(len(trees[0].children)):
                 c_trees = [tree.children[i] for tree in trees]
-                c_tree_tensor = TreeTensor(c_trees, rule_map, non_terminal_map, terminal_map, word_embeddings)
+                c_tree_tensor = TreeTensor(c_trees, nonterminal_rule_map, terminal_rule_map,
+                                           nonterminal_map, terminal_map, word_embeddings)
                 self.children.append(c_tree_tensor)
+            if self.children[0].is_terminal:
+                self.is_preterminal = True
+                self.rule = terminal_rule_map[ref.rule]
+            else:
+                self.is_preterminal = False
+                self.rule = nonterminal_rule_map[ref.rule]
 
     def cuda(self):
         assert torch.cuda.is_available()
@@ -148,21 +164,29 @@ class Tree:
                 self.children.append(Tree(parse))
             self.rule = '%s -> %s' % (self.node, ' '.join(['term' if c.is_terminal else c.node for c in self.children]))
 
-    def all_rules(self):
-        if self.is_terminal:
+    def all_nonterminal_rules(self):
+        if self.is_terminal or self.children[0].is_terminal:
             return []
         rules = [self.rule]
         for c in self.children:
-            rules += c.all_rules()
+            rules += c.all_nonterminal_rules()
         return rules
 
-    def all_non_terminals(self):
+    def all_terminal_rules(self):
         if self.is_terminal:
             return []
-        non_terminals = [self.node]
+        rules = [self.rule] if self.children[0].is_terminal else []
         for c in self.children:
-            non_terminals += c.all_non_terminals()
-        return non_terminals
+            rules += c.all_terminal_rules()
+        return rules
+
+    def all_nonterminals(self):
+        if self.is_terminal:
+            return []
+        nonterminals = [self.node]
+        for c in self.children:
+            nonterminals += c.all_nonterminals()
+        return nonterminals
 
     def all_terminals(self):
         if self.is_terminal:

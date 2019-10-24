@@ -1,4 +1,0 @@
-["S", ["NP", ["Det", "the"], ["N", "man"]], ["VP", ["V", "ran"]]]
-["S", ["NP", ["Det", "the"], ["N", "girl"]], ["VP", ["V", "knew"]]]
-["S1", ["NP1", ["Det1", "the"], ["N1", "man"]], ["VP1", ["V1", "ran"]]]
-["S", ["NP", ["Det", "a"], ["N", "boy"]], ["VP", ["V", "flew"]]]

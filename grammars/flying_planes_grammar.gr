@@ -1,0 +1,69 @@
+# Rules
+
+1   S   NP  VP
+
+1   NP  Adj N
+1   NP  Ger N
+
+1 VP    V   D
+
+
+# Vocabulary.
+
+1	Adj	flying
+1	Adj	driving
+1	Adj	operating
+1	Adj	cooking
+1	Adj	smelling
+1	Adj	touching
+1	Adj	moving
+1	Adj	climbing
+1	Adj	baking
+1	Adj	destroying
+1	Adj	scaling
+1	Adj	feeding
+
+1	Ger	flying
+1	Ger	driving
+1	Ger	operating
+1	Ger	cooking
+1	Ger	smelling
+1	Ger	touching
+1	Ger	moving
+1	Ger	climbing
+1	Ger	baking
+1	Ger	destroying
+1	Ger	scaling
+1	Ger	feeding
+
+
+1	N	planes
+1	N	cars
+1	N	humans
+1	N	cabbages
+1	N	trains
+1	N	mountains
+1	N	trees
+1	N	books
+1	N	helicopters
+1	N	candles
+1	N	flames
+1	N	boats
+
+
+1	V	MASK
+
+1	D	dangerous
+1	D	delicious
+1	D	exciting
+1	D	fun
+1	D	scary
+1	D	perplexing
+1	D	difficult
+1	D	mean
+1	D	spooky
+1	D	lovely
+1	D	enlightening
+1	D	fantastic
+
+

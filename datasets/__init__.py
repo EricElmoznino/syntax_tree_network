@@ -1,1 +1,2 @@
 from .TreeDatasetClassification import TreeDatasetClassification
+from .FlyingPlanesDataset import FlyingPlanesDataset
