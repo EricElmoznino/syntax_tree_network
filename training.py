@@ -19,7 +19,7 @@ else:
     device = 'cpu'
 
 
-def run(run_name, save_dict, metric_names, trainer, evaluator, train_loader, val_loader, epochs, log_interval=10):
+def run(run_name, save_dict, metric_names, trainer, evaluator, train_loader, val_loader, epochs):
     save_dir = os.path.join('saved_runs', run_name)
     os.mkdir(save_dir)
     writer = SummaryWriter(log_dir=os.path.join(save_dir, 'logs'))
@@ -33,15 +33,11 @@ def run(run_name, save_dict, metric_names, trainer, evaluator, train_loader, val
     def log_training_results(engine):
         for metric, value in engine.state.metrics.items():
             writer.add_scalar("training/{}".format(metric), value, engine.state.iteration)
-        iteration = (engine.state.iteration - 1) % len(train_loader) + 1
-        if iteration % log_interval == 0:
-            results = ['Epoch[{}] Iteration[{}/{}]'.format(engine.state.epoch, iteration, len(train_loader))]
-            for metric, value in engine.state.metrics.items():
-                results.append('{}: {:.2f}'.format(metric, value))
-            print(' '.join(results))
 
     @trainer.on(Events.EPOCH_COMPLETED)
     def log_validation_results(engine):
+        if evaluator is None:
+            return
         evaluator.run(val_loader)
         results = ['Validation Results - Epoch: {}'.format(engine.state.epoch)]
         for metric, value in evaluator.state.metrics.items():

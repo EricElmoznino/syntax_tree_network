@@ -15,6 +15,7 @@ class TreeDataset(Dataset):
         self.trees = self.read_data(os.path.join(data_dir, 'data.txt'))
         self.unique_trees = self.group_unique_trees()
         self.epoch_batches = self.batches_from_unique()
+        self.shuffle_data()
         self.labels = self.read_labels(os.path.join(data_dir, 'labels.txt'))
 
         self.word_embeddings = word_embeddings
