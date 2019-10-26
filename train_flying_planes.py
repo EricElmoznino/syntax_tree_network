@@ -25,6 +25,7 @@ if __name__ == '__main__':
     req_grp.add_argument('--hidden_size', default=20, type=int, help='hidden layer size.')
     args = parser.parse_args()
 
+    # Create dataset, model, and optimizer
     train_set = FlyingPlanesDataset(args.data_dir, args.batch_size, shuffle=True)
     train_loader = DataLoader(train_set, batch_size=None)
 
@@ -44,6 +45,7 @@ if __name__ == '__main__':
 
     optimizer = torch.optim.Adam(list(model.parameters()) + list(classifier.parameters()), lr=args.lr)
 
+    # Training iteration
     def step_train(engine, batch):
         model.train()
 
@@ -63,10 +65,12 @@ if __name__ == '__main__':
 
         return {'y_pred': c, 'y_true': label, 'loss': loss.item()}
 
+    # Training metrics
     trainer = Engine(step_train)
     metric_names = ['loss', 'accuracy']
     RunningAverage(output_transform=lambda x: x['loss']).attach(trainer, 'loss')
     RunningAverage(Accuracy(lambda x: (x['y_pred'], x['y_true']))).attach(trainer, 'accuracy')
     save_dict = {'model': model, 'classifier': classifier}
 
+    # Begin training
     run(args.run_name, save_dict, metric_names, trainer, None, train_loader, None, args.epochs)
