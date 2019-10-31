@@ -16,7 +16,6 @@ class TreeDataset(Dataset):
         self.unique_trees = self.group_unique_trees()
         self.epoch_batches = self.batches_from_unique()
         self.shuffle_data()
-        self.labels = self.read_labels(os.path.join(data_dir, 'labels.txt'))
 
         self.word_embeddings = word_embeddings
         self.nonterminal_rule_map, self.terminal_rule_map, self.nonterminal_map, self.terminal_map = self.scan_dataset()
@@ -37,9 +36,7 @@ class TreeDataset(Dataset):
         trees = [self.trees[i] for i in batch_indices]
         tree_tensor = TreeTensor(trees, self.nonterminal_rule_map, self.terminal_rule_map,
                                  self.nonterminal_map, self.terminal_map, self.word_embeddings)
-        label = [self.label_tensor(self.labels[i]) for i in batch_indices]
-        label = torch.stack(label)
-        return tree_tensor, label
+        return tree_tensor
 
     def read_data(self, data_path):
         with open(data_path) as f:
@@ -100,12 +97,6 @@ class TreeDataset(Dataset):
             terminal_map = None
         return nonterminal_rule_map, terminal_rule_map, nonterminal_map, terminal_map
 
-    def read_labels(self, label_path):
-        raise NotImplementedError()
-
-    def label_tensor(self, label):
-        raise NotImplementedError()
-
 
 class TreeTensor:
 
@@ -152,6 +143,12 @@ class TreeTensor:
 class Tree:
 
     def __init__(self, sentence_parse):
+        if sentence_parse is None:
+            self.is_terminal = False
+            self.node = None
+            self.children = None
+            self.rule = None
+            return
         if isinstance(sentence_parse, str):
             self.is_terminal = True
             self.node = sentence_parse
@@ -196,6 +193,17 @@ class Tree:
         for c in self.children:
             terminals += c.all_terminals()
         return terminals
+
+    def sentence(self):
+        def recursive_words(t):
+            if t.is_terminal:
+                return [t.node]
+            w = []
+            for c in t.children:
+                w += recursive_words(c)
+            return w
+        words = ' '.join(recursive_words(self))
+        return words
 
     @staticmethod
     def same_syntax(first, second):

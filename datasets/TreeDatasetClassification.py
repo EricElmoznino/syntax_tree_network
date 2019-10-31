@@ -1,9 +1,9 @@
 import torch
 
-from .TreeDataset import TreeDataset
+from .TreeDatasetLabeled import TreeDatasetLabeled
 
 
-class TreeDatasetClassification(TreeDataset):
+class TreeDatasetClassification(TreeDatasetLabeled):
 
     def __init__(self, data_dir, batch_size=1, shuffle=False, word_embeddings=None):
         super().__init__(data_dir, batch_size=batch_size, shuffle=shuffle, word_embeddings=word_embeddings)

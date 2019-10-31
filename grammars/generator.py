@@ -105,7 +105,7 @@ class Grammar:
         if enable_debug:
             print("Constructed: ", ' '.join(just_sentence))
 
-        sentence = ' '.join(sentence).replace('[ ', '[').replace(' ]', ']').replace('],]', ']]').replace(',],', ']')
+        sentence = ' '.join(sentence).replace('[ ', '[').replace(' ]', ']').replace(',]', ']')[:-1]
         if not enable_tree:
             sentence = sentence.replace('"', '')
 
