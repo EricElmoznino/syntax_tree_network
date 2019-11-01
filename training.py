@@ -19,7 +19,7 @@ else:
     device = 'cpu'
 
 
-def run(run_name, save_dict, metric_names, trainer, evaluator, train_loader, val_loader, epochs):
+def run(run_name, save_dict, metric_names, trainer, evaluator, train_loader, val_loader, gen_loader, epochs):
     save_dir = os.path.join('saved_runs', run_name)
     os.mkdir(save_dir)
     writer = SummaryWriter(log_dir=os.path.join(save_dir, 'logs'))
@@ -36,12 +36,23 @@ def run(run_name, save_dict, metric_names, trainer, evaluator, train_loader, val
 
     @trainer.on(Events.EPOCH_COMPLETED)
     def log_validation_results(engine):
-        if evaluator is None:
+        if val_loader is None:
             return
         evaluator.run(val_loader)
         results = ['Validation Results - Epoch: {}'.format(engine.state.epoch)]
         for metric, value in evaluator.state.metrics.items():
             writer.add_scalar("validation/{}".format(metric), value, engine.state.iteration)
+            results.append('{}: {:.2f}'.format(metric, value))
+        print(' '.join(results))
+
+    @trainer.on(Events.EPOCH_COMPLETED)
+    def log_generalization_results(engine):
+        if gen_loader is None:
+            return
+        evaluator.run(gen_loader)
+        results = ['Generalization Results - Epoch: {}'.format(engine.state.epoch)]
+        for metric, value in evaluator.state.metrics.items():
+            writer.add_scalar("generalization/{}".format(metric), value, engine.state.iteration)
             results.append('{}: {:.2f}'.format(metric, value))
         print(' '.join(results))
 

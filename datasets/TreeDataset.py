@@ -103,6 +103,7 @@ class TreeTensor:
     def __init__(self, trees, nonterminal_rule_map, terminal_rule_map,
                  nonterminal_map, terminal_map, word_embeddings=None):
         assert isinstance(trees, list)
+        self.trees = trees
         ref = trees[0]
         if ref.is_terminal:
             self.is_terminal = True
@@ -138,6 +139,18 @@ class TreeTensor:
             self.rule = self.rule.cuda()
             for c in self.children:
                 c.cuda()
+
+    def sentence(self):
+        def recursive_words(t):
+            if t.is_terminal:
+                return [t.node]
+            w = []
+            for c in t.children:
+                w += recursive_words(c)
+            return w
+        words = torch.stack(recursive_words(self))
+        words = words.argmax(dim=-1)
+        return words
 
 
 class Tree:

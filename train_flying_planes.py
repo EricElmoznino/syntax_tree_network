@@ -3,12 +3,35 @@ import torch
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
 from ignite.engine import Engine
-from ignite.metrics import Accuracy, RunningAverage
+from ignite.metrics import Accuracy, Loss, RunningAverage
 from training import run
 from models import *
 from datasets import FlyingPlanesDataset
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+
+def step_train(model, optimizer):
+    def step(engine, batch):
+        model.train()
+
+        tree, label = batch
+        if torch.cuda.is_available():
+            tree.cuda()
+        label.to(device)
+
+        h = model(tree)
+        c = classifier(h)
+
+        loss = F.cross_entropy(c, label)
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        return {'y_pred': c, 'y_true': label}
+    return step
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -45,32 +68,12 @@ if __name__ == '__main__':
 
     optimizer = torch.optim.Adam(list(model.parameters()) + list(classifier.parameters()), lr=args.lr)
 
-    # Training iteration
-    def step_train(engine, batch):
-        model.train()
-
-        tree, label = batch
-        if torch.cuda.is_available():
-            tree.cuda()
-        label.to(device)
-
-        h = model(tree)
-        c = classifier(h)
-
-        loss = F.cross_entropy(c, label)
-
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-        return {'y_pred': c, 'y_true': label, 'loss': loss.item()}
-
-    # Training metrics
-    trainer = Engine(step_train)
-    metric_names = ['loss', 'accuracy']
-    RunningAverage(output_transform=lambda x: x['loss']).attach(trainer, 'loss')
-    RunningAverage(Accuracy(lambda x: (x['y_pred'], x['y_true']))).attach(trainer, 'accuracy')
+    # Trainer and metrics
     save_dict = {'model': model, 'classifier': classifier}
+    trainer = Engine(step_train(model, optimizer))
+    metric_names = ['loss', 'accuracy']
+    RunningAverage(Loss(F.cross_entropy, lambda x: (x['y_pred'], x['y_true']))).attach(trainer, 'loss')
+    RunningAverage(Accuracy(lambda x: (x['y_pred'], x['y_true']))).attach(trainer, 'accuracy')
 
     # Begin training
-    run(args.run_name, save_dict, metric_names, trainer, None, train_loader, None, args.epochs)
+    run(args.run_name, save_dict, metric_names, trainer, None, train_loader, None, None, args.epochs)

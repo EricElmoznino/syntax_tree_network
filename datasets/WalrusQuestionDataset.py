@@ -14,15 +14,15 @@ class WalrusQuestionDataset(TreeDataset):
         self.nonterminal_map['SQ'] = len(self.nonterminal_map)
         self.num_nonterminals += 1
 
-        self.ques_trees = [generate_question(t) for t in self.trees]
+        self.trees_ques = [generate_question(t) for t in self.trees]
 
     def __getitem__(self, item):
         tree_tensor = super().__getitem__(item)
         batch_indices = self.epoch_batches[item]
-        ques_trees = [self.ques_trees[i] for i in batch_indices]
-        ques_tree_tensor = TreeTensor(ques_trees, self.nonterminal_rule_map, self.terminal_rule_map,
+        ques_trees = [self.trees_ques[i] for i in batch_indices]
+        tree_ques_tensor = TreeTensor(ques_trees, self.nonterminal_rule_map, self.terminal_rule_map,
                                       self.nonterminal_map, self.terminal_map, self.word_embeddings)
-        return tree_tensor, ques_tree_tensor
+        return tree_tensor, tree_ques_tensor
 
     def read_data(self, data_path):
         with open(data_path) as f:
