@@ -72,7 +72,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     req_grp = parser.add_argument_group('arguments')
     req_grp.add_argument('--run_name', required=True, type=str, help='name of this experiment')
-    req_grp.add_argument('--data_dir', default='data/walrus_debug', type=str,
+    req_grp.add_argument('--data_dir', default='data/walrus', type=str,
                          help='path to the directory of the dataset.')
     req_grp.add_argument('--model', default='syntax_tree_network',
                          type=str, help='name of the model to compute features.',
