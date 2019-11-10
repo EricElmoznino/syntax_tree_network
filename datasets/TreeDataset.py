@@ -134,9 +134,9 @@ class TreeTensor:
 
     def cuda(self):
         assert torch.cuda.is_available()
-        self.node = self.node.cuda()
-        if not self.is_terminal:
-            self.rule = self.rule.cuda()
+        if self.is_terminal:
+            self.node = self.node.cuda()
+        else:
             for c in self.children:
                 c.cuda()
 
