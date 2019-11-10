@@ -2,6 +2,20 @@ import json
 from copy import deepcopy
 
 
+def convert(known_parse_data, tom_data, grammar, save_path):
+    v_to_nt = vocabulary_map(grammar)
+    tom_sentences, tom_nonterminals = sentence_nonterminals(tom_data, v_to_nt)
+    no_vocab_parse_map = parse_map(known_parse_data)
+    parses = []
+    for s, nt in zip(tom_sentences, tom_nonterminals):
+        p = deepcopy(no_vocab_parse_map[nt])
+        full_parse(s, p)
+        parses.append(p)
+    parses = [json.dumps(p) + '\n' for p in parses]
+    with open(save_path, 'w') as f:
+        f.writelines(parses)
+
+
 def vocabulary_map(grammar):
     vocab_lines = []
     with open(grammar) as f:
@@ -71,17 +85,3 @@ def full_parse(sentence, nonterminal_parse):
     else:
         for c in nonterminal_parse[1:]:
             full_parse(sentence, c)
-
-
-def convert(known_parse_data, tom_data, grammar, save_path):
-    v_to_nt = vocabulary_map(grammar)
-    tom_sentences, tom_nonterminals = sentence_nonterminals(tom_data, v_to_nt)
-    no_vocab_parse_map = parse_map(known_parse_data)
-    parses = []
-    for s, nt in zip(tom_sentences, tom_nonterminals):
-        p = deepcopy(no_vocab_parse_map[nt])
-        full_parse(s, p)
-        parses.append(p)
-    parses = [json.dumps(p) + '\n' for p in parses]
-    with open(save_path, 'w') as f:
-        f.writelines(parses)

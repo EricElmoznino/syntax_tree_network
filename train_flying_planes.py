@@ -8,7 +8,7 @@ from training import run
 from models import *
 from datasets import FlyingPlanesDataset
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def step_train(model, optimizer):
@@ -36,7 +36,7 @@ def step_train(model, optimizer):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     req_grp = parser.add_argument_group('arguments')
-    req_grp.add_argument('--run_name', required=True, type=str, help='name of this experiment')
+    req_grp.add_argument('--run_name', required=True, type=str, help='name of this experiment.')
     req_grp.add_argument('--data_dir', default='data/flying_planes', type=str,
                          help='path to the directory of the dataset.')
     req_grp.add_argument('--model', default='syntax_tree_network',
@@ -76,4 +76,4 @@ if __name__ == '__main__':
     RunningAverage(Accuracy(lambda x: (x['y_pred'], x['y_true']))).attach(trainer, 'accuracy')
 
     # Begin training
-    run(args.run_name, save_dict, metric_names, trainer, None, train_loader, None, None, args.epochs)
+    run(args.run_name, save_dict, metric_names, trainer, None, train_loader, None, None, args.epochs, None, 'accuracy')

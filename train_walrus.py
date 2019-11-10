@@ -9,10 +9,10 @@ from training import run
 from models import *
 from datasets import WalrusQuestionDataset
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def step_lm(model, decoder, optimizer, train=True):
+def step_creator(model, decoder, optimizer, train=True):
     if train:
         assert optimizer is not None
     else:
@@ -71,7 +71,7 @@ def step_lm(model, decoder, optimizer, train=True):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     req_grp = parser.add_argument_group('arguments')
-    req_grp.add_argument('--run_name', required=True, type=str, help='name of this experiment')
+    req_grp.add_argument('--run_name', required=True, type=str, help='name of this experiment.')
     req_grp.add_argument('--data_dir', default='data/walrus', type=str,
                          help='path to the directory of the dataset.')
     req_grp.add_argument('--model', default='syntax_tree_network',
@@ -83,8 +83,7 @@ if __name__ == '__main__':
     req_grp.add_argument('--hidden_size', default=50, type=int, help='hidden layer size.')
     args = parser.parse_args()
 
-    # Create datasets, models, and optimizers
-    # todo: generate datasets from Tom's files
+    # Create datasets, models, and optimizer
     train_set = WalrusQuestionDataset(os.path.join(args.data_dir, 'train'), args.batch_size, shuffle=True)
     train_loader = DataLoader(train_set, batch_size=None)
     val_set = WalrusQuestionDataset(os.path.join(args.data_dir, 'val'), args.batch_size)
@@ -92,7 +91,6 @@ if __name__ == '__main__':
     gen_set = WalrusQuestionDataset(os.path.join(args.data_dir, 'gen'), args.batch_size)
     gen_loader = DataLoader(gen_set, batch_size=None)
 
-    # todo: transformer models
     if args.model == 'syntax_tree_network':
         model = SyntaxTreeNetwork(train_set.input_size, args.hidden_size, train_set.num_nonterminal_rules,
                                   train_set.num_terminal_rules, train_set.num_nonterminals)
@@ -105,34 +103,33 @@ if __name__ == '__main__':
         raise NotImplementedError('unknown model type {}'.format(args.model))
     model, decoder = model.to(device), decoder.to(device)
 
-    optimizer_lm = torch.optim.Adam(list(model.parameters()) + list(decoder.parameters()), lr=args.lr)
-    # todo: optimizer for question formation task
+    optimizer = torch.optim.Adam(list(model.parameters()) + list(decoder.parameters()), lr=args.lr)
 
-    # Language modeling trainer and metrics
+    # Trainer and metrics
     save_dict = {'model': model, 'decoder': decoder}
-    trainer_lm = Engine(step_lm(model, decoder, optimizer_lm, train=True))
+    trainer = Engine(step_creator(model, decoder, optimizer, train=True))
     metric_names = ['loss_decl', 'loss_ques', 'token_accuracy_decl', 'token_accuracy_ques',
                     'sentence_accuracy_decl', 'sentence_accuracy_ques']
     RunningAverage(Loss(F.cross_entropy, lambda x: (x['pred_token_decl'], x['true_token_decl'])))\
-        .attach(trainer_lm, 'loss_decl')
+        .attach(trainer, 'loss_decl')
     RunningAverage(Loss(F.cross_entropy, lambda x: (x['pred_token_ques'], x['true_token_ques'])))\
-        .attach(trainer_lm, 'loss_ques')
+        .attach(trainer, 'loss_ques')
     RunningAverage(Accuracy(lambda x: (x['pred_token_decl'], x['true_token_decl'])))\
-        .attach(trainer_lm, 'token_accuracy_decl')
+        .attach(trainer, 'token_accuracy_decl')
     RunningAverage(Accuracy(lambda x: (x['pred_token_ques'], x['true_token_ques'])))\
-        .attach(trainer_lm, 'token_accuracy_ques')
+        .attach(trainer, 'token_accuracy_ques')
     RunningAverage(Accuracy(lambda x: (x['pred_sent_decl'], x['true_sent_decl'])))\
-        .attach(trainer_lm, 'sentence_accuracy_decl')
+        .attach(trainer, 'sentence_accuracy_decl')
     RunningAverage(Accuracy(lambda x: (x['pred_sent_ques'], x['true_sent_ques'])))\
-        .attach(trainer_lm, 'sentence_accuracy_ques')
+        .attach(trainer, 'sentence_accuracy_ques')
 
-    # Language modeling evaluator and metrics
-    evaluator_lm = Engine(step_lm(model, decoder, None, train=False))
-    Accuracy(lambda x: (x['pred_token_decl'], x['true_token_decl'])).attach(evaluator_lm, 'token_accuracy_decl')
-    Accuracy(lambda x: (x['pred_token_ques'], x['true_token_ques'])).attach(evaluator_lm, 'token_accuracy_ques')
-    Accuracy(lambda x: (x['pred_sent_decl'], x['true_sent_decl'])).attach(evaluator_lm, 'sentence_accuracy_decl')
-    Accuracy(lambda x: (x['pred_sent_ques'], x['true_sent_ques'])).attach(evaluator_lm, 'sentence_accuracy_ques')
+    # Evaluator and metrics
+    evaluator = Engine(step_creator(model, decoder, None, train=False))
+    Accuracy(lambda x: (x['pred_token_decl'], x['true_token_decl'])).attach(evaluator, 'token_accuracy_decl')
+    Accuracy(lambda x: (x['pred_token_ques'], x['true_token_ques'])).attach(evaluator, 'token_accuracy_ques')
+    Accuracy(lambda x: (x['pred_sent_decl'], x['true_sent_decl'])).attach(evaluator, 'sentence_accuracy_decl')
+    Accuracy(lambda x: (x['pred_sent_ques'], x['true_sent_ques'])).attach(evaluator, 'sentence_accuracy_ques')
 
     # Begin language modeling training
-    run(args.run_name, save_dict, metric_names, trainer_lm, evaluator_lm,
-        train_loader, val_loader, gen_loader, args.epochs)
+    run(args.run_name, save_dict, metric_names, trainer, evaluator,
+        train_loader, val_loader, gen_loader, args.epochs, 'token_accuracy_decl')

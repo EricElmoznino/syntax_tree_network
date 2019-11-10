@@ -13,21 +13,22 @@ if torch.cuda.is_available(): torch.cuda.manual_seed(99)
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
-if torch.cuda.is_available():
-    device = 'cuda'
-else:
-    device = 'cpu'
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def run(run_name, save_dict, metric_names, trainer, evaluator, train_loader, val_loader, gen_loader, epochs):
+def run(run_name, save_dict, metric_names, trainer, evaluator,
+        train_loader, val_loader, gen_loader, epochs, save_metric):
     save_dir = os.path.join('saved_runs', run_name)
     os.mkdir(save_dir)
     writer = SummaryWriter(log_dir=os.path.join(save_dir, 'logs'))
 
     ProgressBar().attach(trainer, metric_names=metric_names)
-    checkpoint_handler = ModelCheckpoint(os.path.join(save_dir, 'checkpoints'), '',
-                                         save_interval=1, n_saved=3, require_empty=False)
-    trainer.add_event_handler(event_name=Events.EPOCH_COMPLETED, handler=checkpoint_handler, to_save=save_dict)
+    checkpoint_handler = ModelCheckpoint(os.path.join(save_dir, 'checkpoints'), '', require_empty=False,
+                                         score_function=lambda e: e.state.metrics[save_metric])
+    if evaluator is not None:
+        evaluator.add_event_handler(event_name=Events.COMPLETED, handler=checkpoint_handler, to_save=save_dict)
+    else:
+        trainer.add_event_handler(event_name=Events.EPOCH_COMPLETED, handler=checkpoint_handler, to_save=save_dict)
 
     @trainer.on(Events.ITERATION_COMPLETED)
     def log_training_results(engine):
