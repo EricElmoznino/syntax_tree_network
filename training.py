@@ -32,8 +32,9 @@ def run(run_name, save_dict, metric_names, trainer, evaluator,
 
     @trainer.on(Events.ITERATION_COMPLETED)
     def log_training_results(engine):
-        for metric, value in engine.state.metrics.items():
-            writer.add_scalar("training/{}".format(metric), value, engine.state.iteration)
+        if engine.state.iteration % 1000:
+            for metric, value in engine.state.metrics.items():
+                writer.add_scalar("training/{}".format(metric), value, engine.state.iteration)
 
     @trainer.on(Events.EPOCH_COMPLETED)
     def log_validation_results(engine):
