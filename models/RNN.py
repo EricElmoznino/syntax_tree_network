@@ -7,12 +7,13 @@ class RNN(nn.Module):
     def __init__(self, input_size, hidden_size, activation='tanh'):
         super().__init__()
 
-        self.rnn = nn.RNN(input_size, hidden_size, nonlinearity=activation)
+        self.embedding = nn.Embedding(input_size, hidden_size)
+        self.rnn = nn.RNN(hidden_size, hidden_size, nonlinearity=activation)
 
     def forward(self, tree):
         def recursive_words(t):
             if t.is_terminal:
-                return [t.node]
+                return [self.embedding(t.node)]
             w = []
             for c in t.children:
                 w += recursive_words(c)

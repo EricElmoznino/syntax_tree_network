@@ -53,8 +53,8 @@ if __name__ == '__main__':
     train_loader = DataLoader(train_set, batch_size=None)
 
     if args.model == 'syntax_tree_network':
-        model = SyntaxTreeNetwork(train_set.input_size, args.hidden_size, train_set.num_nonterminal_rules,
-                                  train_set.num_terminal_rules, train_set.num_nonterminals)
+        model = SyntaxTreeNetwork(train_set.input_size, args.hidden_size,
+                                  train_set.num_nonterminal_rules, train_set.num_nonterminals)
     elif args.model == 'tree_network':
         model = TreeNetwork(train_set.input_size, args.hidden_size)
     elif args.model == 'rnn':
@@ -76,4 +76,4 @@ if __name__ == '__main__':
     RunningAverage(Accuracy(lambda x: (x['y_pred'], x['y_true']))).attach(trainer, 'accuracy')
 
     # Begin training
-    run(args.run_name, save_dict, metric_names, trainer, None, train_loader, None, None, args.epochs, None, 'accuracy')
+    run(args.run_name, save_dict, metric_names, trainer, None, train_loader, None, None, args.epochs, 'accuracy')

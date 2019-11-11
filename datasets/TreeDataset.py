@@ -8,7 +8,7 @@ from torch.utils.data import Dataset
 
 class TreeDataset(Dataset):
 
-    def __init__(self, data_dir, batch_size=1, shuffle=False, word_embeddings=None):
+    def __init__(self, data_dir, batch_size=1, shuffle=False):
         self.batch_size = batch_size
         self.shuffle = shuffle
 
@@ -17,13 +17,9 @@ class TreeDataset(Dataset):
         self.epoch_batches = self.batches_from_unique()
         self.shuffle_data()
 
-        self.word_embeddings = word_embeddings
         self.nonterminal_rule_map, self.terminal_rule_map, self.nonterminal_map, self.terminal_map = self.scan_dataset()
 
-        if self.word_embeddings is not None:
-            self.input_size = len(word_embeddings[list(word_embeddings.keys())[0]])
-        else:
-            self.input_size = len(self.terminal_map)
+        self.input_size = len(self.terminal_map)
         self.num_nonterminal_rules = len(self.nonterminal_rule_map)
         self.num_terminal_rules = len(self.terminal_rule_map)
         self.num_nonterminals = len(self.nonterminal_map)
@@ -35,7 +31,7 @@ class TreeDataset(Dataset):
         batch_indices = self.epoch_batches[item]
         trees = [self.trees[i] for i in batch_indices]
         tree_tensor = TreeTensor(trees, self.nonterminal_rule_map, self.terminal_rule_map,
-                                 self.nonterminal_map, self.terminal_map, self.word_embeddings)
+                                 self.nonterminal_map, self.terminal_map)
         return tree_tensor
 
     def read_data(self, data_path):
@@ -77,7 +73,7 @@ class TreeDataset(Dataset):
         unique_nonterminal_rules = set()
         unique_terminal_rules = set()
         unique_nonterminals = set()
-        unique_terminals = set() if self.word_embeddings is None else None
+        unique_terminals = set()
         for tree in self.trees:
             for r in tree.all_nonterminal_rules():
                 unique_nonterminal_rules.add(r)
@@ -85,23 +81,19 @@ class TreeDataset(Dataset):
                 unique_terminal_rules.add(r)
             for nt in tree.all_nonterminals():
                 unique_nonterminals.add(nt)
-            if self.word_embeddings is None:
-                for t in tree.all_terminals():
-                    unique_terminals.add(t)
+            for t in tree.all_terminals():
+                unique_terminals.add(t)
         nonterminal_rule_map = {r: i for i, r in enumerate(list(unique_nonterminal_rules))}
         terminal_rule_map = {r: i for i, r in enumerate(list(unique_terminal_rules))}
         nonterminal_map = {nt: i for i, nt in enumerate(list(unique_nonterminals))}
-        if self.word_embeddings is None:
-            terminal_map = {t: i for i, t in enumerate(list(unique_terminals))}
-        else:
-            terminal_map = None
+        terminal_map = {t: i for i, t in enumerate(list(unique_terminals))}
         return nonterminal_rule_map, terminal_rule_map, nonterminal_map, terminal_map
 
 
 class TreeTensor:
 
     def __init__(self, trees, nonterminal_rule_map, terminal_rule_map,
-                 nonterminal_map, terminal_map, word_embeddings=None):
+                 nonterminal_map, terminal_map):
         assert isinstance(trees, list)
         self.trees = trees
         ref = trees[0]
@@ -110,12 +102,7 @@ class TreeTensor:
             self.is_preterminal = False
             self.children = None
             self.rule = None
-            if word_embeddings is None:
-                terminals = torch.LongTensor([terminal_map[tree.node] for tree in trees])
-                terminals = one_hot(terminals, num_classes=len(terminal_map)).float()
-            else:
-                terminals = torch.stack([torch.FloatTensor(word_embeddings[tree.node]) for tree in trees])
-            self.node = terminals
+            self.node = torch.LongTensor([terminal_map[tree.node] for tree in trees])
         else:
             self.is_terminal = False
             self.node = nonterminal_map[ref.node]
@@ -123,7 +110,7 @@ class TreeTensor:
             for i in range(len(trees[0].children)):
                 c_trees = [tree.children[i] for tree in trees]
                 c_tree_tensor = TreeTensor(c_trees, nonterminal_rule_map, terminal_rule_map,
-                                           nonterminal_map, terminal_map, word_embeddings)
+                                           nonterminal_map, terminal_map)
                 self.children.append(c_tree_tensor)
             if self.children[0].is_terminal:
                 self.is_preterminal = True
@@ -149,7 +136,6 @@ class TreeTensor:
                 w += recursive_words(c)
             return w
         words = torch.stack(recursive_words(self))
-        words = words.argmax(dim=-1)
         return words
 
 

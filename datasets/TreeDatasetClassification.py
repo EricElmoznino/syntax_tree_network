@@ -5,8 +5,8 @@ from .TreeDatasetLabeled import TreeDatasetLabeled
 
 class TreeDatasetClassification(TreeDatasetLabeled):
 
-    def __init__(self, data_dir, batch_size=1, shuffle=False, word_embeddings=None):
-        super().__init__(data_dir, batch_size=batch_size, shuffle=shuffle, word_embeddings=word_embeddings)
+    def __init__(self, data_dir, batch_size=1, shuffle=False):
+        super().__init__(data_dir, batch_size=batch_size, shuffle=shuffle)
         self.n_classes = max(self.labels) + 1
 
     def read_labels(self, label_path):

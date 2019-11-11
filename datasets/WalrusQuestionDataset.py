@@ -6,7 +6,7 @@ from .TreeDataset import TreeDataset, TreeTensor, Tree
 class WalrusQuestionDataset(TreeDataset):
 
     def __init__(self, data_dir, batch_size=1, shuffle=False, word_embeddings=None):
-        super().__init__(data_dir, batch_size, shuffle, word_embeddings)
+        super().__init__(data_dir, batch_size, shuffle)
 
         self.nonterminal_rule_map['SQ -> Aux S'] = len(self.nonterminal_rule_map)
         self.nonterminal_rule_map['S -> NP V'] = len(self.nonterminal_rule_map)
@@ -21,7 +21,7 @@ class WalrusQuestionDataset(TreeDataset):
         batch_indices = self.epoch_batches[item]
         ques_trees = [self.trees_ques[i] for i in batch_indices]
         tree_ques_tensor = TreeTensor(ques_trees, self.nonterminal_rule_map, self.terminal_rule_map,
-                                      self.nonterminal_map, self.terminal_map, self.word_embeddings)
+                                      self.nonterminal_map, self.terminal_map)
         return tree_tensor, tree_ques_tensor
 
     def read_data(self, data_path):

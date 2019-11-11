@@ -6,8 +6,8 @@ from .TreeDataset import TreeDataset
 
 class TreeDatasetLabeled(TreeDataset):
 
-    def __init__(self, data_dir, batch_size=1, shuffle=False, word_embeddings=None):
-        super().__init__(data_dir, batch_size=batch_size, shuffle=shuffle, word_embeddings=word_embeddings)
+    def __init__(self, data_dir, batch_size=1, shuffle=False):
+        super().__init__(data_dir, batch_size=batch_size, shuffle=shuffle)
         self.labels = self.read_labels(os.path.join(data_dir, 'labels.txt'))
 
     def __getitem__(self, item):

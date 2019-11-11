@@ -7,7 +7,7 @@ class TreeNetwork(nn.Module):
     def __init__(self, input_size, hidden_size, activation='tanh'):
         super().__init__()
 
-        self.terminal_rule = nn.Linear(input_size, hidden_size)
+        self.embedding = nn.Embedding(input_size, hidden_size)
         self.nonterminal_rule = nn.Linear(2 * hidden_size, hidden_size)
 
         if activation == 'tanh':
@@ -26,7 +26,7 @@ class TreeNetwork(nn.Module):
 
     def recursive_forward(self, tree):
         if tree.is_preterminal:
-            h = self.terminal_rule(tree.children[0].node)
+            h = self.embedding(tree.children[0].node)
         else:
             h_children = [self.recursive_forward(c) for c in tree.children]
             h_agr = torch.cat(h_children, dim=1)
