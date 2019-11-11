@@ -20,7 +20,7 @@ class DecoderSyntaxTreeNetwork(nn.Module):
                                  for _ in range(num_terminal_rules)]
         for w in terminal_rule_weights:
             nn.init.kaiming_uniform_(w, a=math.sqrt(5))
-        nonterminal_biases = [nn.Parameter(torch.Tensor(hidden_size))
+        nonterminal_biases = [nn.Parameter(torch.zeros(hidden_size))
                               for _ in range(num_nonterminals)]
 
         self.nonterminal_rule_weights = nn.ParameterList(nonterminal_rule_weights)
