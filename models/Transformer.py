@@ -9,10 +9,8 @@ class Transformer(nn.Module):
         self.layers = []
         for i in range(n_layers - 1):
             self.layers += [nn.Linear(hidden_size, hidden_size),
-                            nn.InstanceNorm1d(hidden_size),
                             nn.ReLU(inplace=True)]
-        self.layers += [nn.Linear(hidden_size, hidden_size),
-                        nn.InstanceNorm1d(hidden_size)]
+        self.layers += [nn.Linear(hidden_size, hidden_size)]
 
         if final_activation == 'tanh':
             self.layers += [nn.Tanh()]
