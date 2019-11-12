@@ -32,7 +32,7 @@ def run(run_name, save_dict, metric_names, trainer, evaluator,
 
     @trainer.on(Events.ITERATION_COMPLETED)
     def log_training_results(engine):
-        if engine.state.iteration % 1000:
+        if engine.state.iteration % 10000:
             for metric, value in engine.state.metrics.items():
                 writer.add_scalar("training/{}".format(metric), value, engine.state.iteration)
 

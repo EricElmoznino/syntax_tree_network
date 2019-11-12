@@ -44,7 +44,7 @@ if __name__ == '__main__':
                          choices=['syntax_tree_network', 'tree_network', 'rnn'])
     req_grp.add_argument('--epochs', default=100, type=int, help='number of epochs.')
     req_grp.add_argument('--batch_size', default=5, type=int, help='batch size.')
-    parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
+    parser.add_argument('--lr', type=float, default=1e-2, help='learning rate')
     req_grp.add_argument('--hidden_size', default=20, type=int, help='hidden layer size.')
     args = parser.parse_args()
 
@@ -66,7 +66,7 @@ if __name__ == '__main__':
     classifier = Classifier(args.hidden_size, train_set.n_classes)
     classifier = classifier.to(device)
 
-    optimizer = torch.optim.Adam(list(model.parameters()) + list(classifier.parameters()), lr=args.lr)
+    optimizer = torch.optim.SGD(list(model.parameters()) + list(classifier.parameters()), lr=args.lr)
 
     # Trainer and metrics
     save_dict = {'model': model, 'classifier': classifier}

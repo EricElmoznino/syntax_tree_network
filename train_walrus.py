@@ -80,7 +80,7 @@ if __name__ == '__main__':
                                   'gru_mixed'])
     req_grp.add_argument('--epochs', default=100, type=int, help='number of epochs.')
     req_grp.add_argument('--batch_size', default=5, type=int, help='batch size.')
-    parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
+    parser.add_argument('--lr', type=float, default=1e-2, help='learning rate')
     req_grp.add_argument('--hidden_size', default=50, type=int, help='hidden layer size.')
     args = parser.parse_args()
 
@@ -116,7 +116,7 @@ if __name__ == '__main__':
         raise NotImplementedError('unknown model type {}'.format(args.model))
     model, decoder = model.to(device), decoder.to(device)
 
-    optimizer = torch.optim.Adam(list(model.parameters()) + list(decoder.parameters()), lr=args.lr)
+    optimizer = torch.optim.SGD(list(model.parameters()) + list(decoder.parameters()), lr=args.lr)
 
     # Trainer and metrics
     save_dict = {'model': model, 'decoder': decoder}
