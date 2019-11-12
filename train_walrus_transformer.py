@@ -121,7 +121,7 @@ if __name__ == '__main__':
     model.load_state_dict(torch.load(os.path.join(pretrained_dir, model_file), map_location=device))
     decoder.load_state_dict(torch.load(os.path.join(pretrained_dir, decoder_file), map_location=device))
 
-    transformer = Transformer(args.hidden_size, args.n_transformer_layers)
+    transformer = Transformer(args.hidden_size, args.n_transformer_layers).to(device)
 
     optimizer = torch.optim.Adam(transformer.parameters(), lr=args.lr)
 
