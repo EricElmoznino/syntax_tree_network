@@ -76,7 +76,8 @@ if __name__ == '__main__':
                          help='path to the directory of the dataset.')
     req_grp.add_argument('--model', default='syntax_tree_network',
                          type=str, help='name of the model to compute features.',
-                         choices=['syntax_tree_network', 'tree_network', 'syntax_tree_gru', 'tree_gru'])
+                         choices=['syntax_tree_network', 'tree_network', 'syntax_tree_gru', 'tree_gru',
+                                  'gru_mixed'])
     req_grp.add_argument('--epochs', default=100, type=int, help='number of epochs.')
     req_grp.add_argument('--batch_size', default=5, type=int, help='batch size.')
     parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
@@ -106,6 +107,10 @@ if __name__ == '__main__':
                                        train_set.num_terminal_rules, train_set.num_nonterminals)
     elif args.model == 'tree_gru':
         model = TreeGRU(train_set.input_size, args.hidden_size)
+        decoder = DecoderTreeGRU(train_set.input_size, args.hidden_size)
+    elif args.model == 'gru_mixed':
+        model = SyntaxTreeGRU(train_set.input_size, args.hidden_size,
+                              train_set.num_nonterminal_rules, train_set.num_nonterminals)
         decoder = DecoderTreeGRU(train_set.input_size, args.hidden_size)
     else:
         raise NotImplementedError('unknown model type {}'.format(args.model))
