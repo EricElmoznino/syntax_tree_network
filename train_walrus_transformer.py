@@ -96,6 +96,18 @@ if __name__ == '__main__':
     elif args.model == 'tree_network':
         model = TreeNetwork(train_set.input_size, args.hidden_size)
         decoder = DecoderTreeNetwork(train_set.input_size, args.hidden_size)
+    elif args.model == 'syntax_tree_gru':
+        model = SyntaxTreeGRU(train_set.input_size, args.hidden_size,
+                              train_set.num_nonterminal_rules, train_set.num_nonterminals)
+        decoder = DecoderSyntaxTreeGRU(train_set.input_size, args.hidden_size, train_set.num_nonterminal_rules,
+                                       train_set.num_terminal_rules, train_set.num_nonterminals)
+    elif args.model == 'tree_gru':
+        model = TreeGRU(train_set.input_size, args.hidden_size)
+        decoder = DecoderTreeGRU(train_set.input_size, args.hidden_size)
+    elif args.model == 'gru_mixed':
+        model = SyntaxTreeGRU(train_set.input_size, args.hidden_size,
+                              train_set.num_nonterminal_rules, train_set.num_nonterminals)
+        decoder = DecoderTreeGRU(train_set.input_size, args.hidden_size)
     else:
         raise NotImplementedError('unknown model type {}'.format(args.model))
     model, decoder = model.to(device), decoder.to(device)
