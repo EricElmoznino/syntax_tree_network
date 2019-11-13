@@ -18,7 +18,7 @@ class NonterminalFeaturesDataset(Dataset):
     def __init__(self, data_dir):
         data = os.listdir(data_dir)
         data = [d for d in data if '_label.pth' in d]
-        data = [(os.path.join(data_dir, d), int(d.split('_')[0])) for d in data]
+        data = [os.path.join(data_dir, d) for d in data]
         self.data = data
 
     def __len__(self):
