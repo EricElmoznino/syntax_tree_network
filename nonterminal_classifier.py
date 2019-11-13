@@ -61,12 +61,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     req_grp = parser.add_argument_group('arguments')
     req_grp.add_argument('--run_name', required=True, type=str, help='name of this experiment.')
-    req_grp.add_argument('--data_dir', required=True, type=str,
+    req_grp.add_argument('--data_dir', default='data/tree_gru_features', type=str,
                          help='path to the directory of the dataset.')
     req_grp.add_argument('--epochs', default=5, type=int, help='number of epochs.')
     parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
     parser.add_argument('--features', type=int, default=256, help='number of features')
-    parser.add_argument('--nonterminals', type=int, default=256, help='number of nonterminals')
+    parser.add_argument('--nonterminals', type=int, default=64, help='number of nonterminals')
     args = parser.parse_args()
 
     # Create dataset, model, and optimizer
