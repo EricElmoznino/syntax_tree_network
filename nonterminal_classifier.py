@@ -16,19 +16,17 @@ class NonterminalFeaturesDataset(Dataset):
 
     def __init__(self, data_dir):
         data = os.listdir(data_dir)
-        data = [d for d in data if '.pth' in d]
+        data = [d for d in data if '_label.pth' in d]
         data = [(os.path.join(data_dir, d), int(d.split('_')[0])) for d in data]
         self.data = data
-        self.feature_size = torch.load(data[0][0]).shape[0]
-        self.num_nonterminals = max([d[1] for d in data]) + 1
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, item):
-        features, nonterminal = self.data[item]
-        features, nonterminal = torch.load(features), torch.LongTensor([nonterminal])
-        return features, nonterminal
+        features, nonterminals = self.data[item].replace('_label', ''), self.data[item]
+        features, nonterminals = torch.load(features), torch.load(nonterminals)
+        return features, nonterminals.squeeze(1)
 
 
 def step_train(model, optimizer, train=True):
@@ -43,20 +41,19 @@ def step_train(model, optimizer, train=True):
         else:
             model.eval()
 
-        feats, label = batch
-        label = label.unsqueeze(1)
+        feats, labels = batch
         feats.to(device)
-        label.to(device)
+        labels.to(device)
 
         c = classifier(feats)
 
-        loss = F.cross_entropy(c, label)
+        loss = F.cross_entropy(c, labels)
 
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
-        return {'y_pred': c, 'y_true': label}
+        return {'y_pred': c, 'y_true': labels}
     return step
 
 
@@ -67,19 +64,20 @@ if __name__ == '__main__':
     req_grp.add_argument('--data_dir', required=True, type=str,
                          help='path to the directory of the dataset.')
     req_grp.add_argument('--epochs', default=5, type=int, help='number of epochs.')
-    req_grp.add_argument('--batch_size', default=5, type=int, help='batch size.')
-    parser.add_argument('--lr', type=float, default=1e-2, help='learning rate')
+    parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
+    parser.add_argument('--features', type=int, default=256, help='number of features')
+    parser.add_argument('--nonterminals', type=int, default=256, help='number of nonterminals')
     args = parser.parse_args()
 
     # Create dataset, model, and optimizer
     train_set = NonterminalFeaturesDataset(os.path.join(args.data_dir, 'train'))
-    train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True)
+    train_loader = DataLoader(train_set, batch_size=None, shuffle=True)
     val_set = NonterminalFeaturesDataset(os.path.join(args.data_dir, 'val'))
-    val_loader = DataLoader(train_set, batch_size=args.batch_size)
+    val_loader = DataLoader(train_set, batch_size=None)
     gen_set = NonterminalFeaturesDataset(os.path.join(args.data_dir, 'gen'))
-    gen_loader = DataLoader(train_set, batch_size=args.batch_size)
+    gen_loader = DataLoader(train_set, batch_size=None)
 
-    classifier = Classifier(train_set.feature_size, train_set.num_nonterminals)
+    classifier = Classifier(args.features, args.nonterminals)
     classifier = classifier.to(device)
 
     optimizer = torch.optim.SGD(classifier.parameters(), lr=args.lr)
@@ -104,7 +102,7 @@ if __name__ == '__main__':
     files = os.listdir(best_model_folder)
     best_model = [f for f in files if '.pth' in f][0]
     classifier.load_state_dict(torch.load(os.path.join(best_model_folder, best_model), map_location=device))
-    ConfusionMatrix(train_set.num_nonterminals, output_transform=lambda x: (x['y_pred'], x['y_true'])).\
+    ConfusionMatrix(args.nonterminals, output_transform=lambda x: (x['y_pred'], x['y_true'])).\
         attach(evaluator, 'accuracy')
     print('\nBest model results:')
 
