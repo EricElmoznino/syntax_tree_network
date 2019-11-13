@@ -51,11 +51,12 @@ def step_train(model, optimizer, train=True):
 
         c = classifier(feats)
 
-        loss = F.cross_entropy(c, labels)
+        if train:
+            loss = F.cross_entropy(c, labels)
 
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
 
         return {'y_pred': c, 'y_true': labels}
     return step
