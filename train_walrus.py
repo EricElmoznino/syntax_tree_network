@@ -81,7 +81,7 @@ if __name__ == '__main__':
     req_grp.add_argument('--epochs', default=100, type=int, help='number of epochs.')
     req_grp.add_argument('--batch_size', default=5, type=int, help='batch size.')
     parser.add_argument('--lr', type=float, default=1e-2, help='learning rate')
-    req_grp.add_argument('--hidden_size', default=50, type=int, help='hidden layer size.')
+    req_grp.add_argument('--hidden_size', default=5, type=int, help='hidden layer size.')
     args = parser.parse_args()
 
     # Create datasets, models, and optimizer

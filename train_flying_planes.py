@@ -42,7 +42,7 @@ if __name__ == '__main__':
     req_grp.add_argument('--model', default='syntax_tree_network',
                          type=str, help='name of the model to compute features.',
                          choices=['syntax_tree_network', 'tree_network', 'rnn'])
-    req_grp.add_argument('--epochs', default=100, type=int, help='number of epochs.')
+    req_grp.add_argument('--epochs', default=5, type=int, help='number of epochs.')
     req_grp.add_argument('--batch_size', default=5, type=int, help='batch size.')
     parser.add_argument('--lr', type=float, default=1e-2, help='learning rate')
     req_grp.add_argument('--hidden_size', default=20, type=int, help='hidden layer size.')
