@@ -101,24 +101,3 @@ if __name__ == '__main__':
     # Begin training
     run(args.run_name, save_dict, metric_names, trainer, evaluator,
         train_loader, val_loader, gen_loader, args.epochs, 'accuracy')
-
-    # Display best model final results
-    best_model_folder = os.path.join('saved_runs', args.run_name, 'checkpoints')
-    files = os.listdir(best_model_folder)
-    best_model = [f for f in files if '.pth' in f][0]
-    classifier.load_state_dict(torch.load(os.path.join(best_model_folder, best_model), map_location=device))
-    ConfusionMatrix(args.nonterminals, output_transform=lambda x: (x['y_pred'], x['y_true'])).\
-        attach(evaluator, 'accuracy')
-    print('\nBest model results:')
-
-    evaluator.run(val_loader)
-    print('\nValidation:')
-    print('Accuracy: {:.2f}'.format(evaluator.state.metrics['accuracy']))
-    print('Confusion Matrix:')
-    print(evaluator.state.metrics['confusion_matrix'])
-
-    evaluator.run(gen_loader)
-    print('\nGeneralization:')
-    print('Accuracy: {:.2f}'.format(evaluator.state.metrics['accuracy']))
-    print('Confusion Matrix:')
-    print(evaluator.state.metrics['confusion_matrix'])
