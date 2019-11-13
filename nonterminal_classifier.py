@@ -46,8 +46,8 @@ def step_train(model, optimizer, train=True):
             model.eval()
 
         feats, labels = batch
-        feats.to(device)
-        labels.to(device)
+        feats = feats.to(device)
+        labels = labels.to(device)
 
         c = classifier(feats)
 
