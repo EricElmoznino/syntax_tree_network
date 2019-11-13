@@ -1,5 +1,6 @@
 import argparse
 import os
+import random
 import torch
 from torch.utils.data import Dataset
 from torch.nn import functional as F
@@ -27,6 +28,9 @@ class NonterminalFeaturesDataset(Dataset):
         features, nonterminals = self.data[item].replace('_label', ''), self.data[item]
         features, nonterminals = torch.load(features), torch.load(nonterminals)
         return features, nonterminals.squeeze(1)
+
+    def shuffle_data(self):
+        random.shuffle(self.data)
 
 
 def step_train(model, optimizer, train=True):
@@ -71,7 +75,7 @@ if __name__ == '__main__':
 
     # Create dataset, model, and optimizer
     train_set = NonterminalFeaturesDataset(os.path.join(args.data_dir, 'train'))
-    train_loader = DataLoader(train_set, batch_size=None, shuffle=True)
+    train_loader = DataLoader(train_set, batch_size=None)
     val_set = NonterminalFeaturesDataset(os.path.join(args.data_dir, 'val'))
     val_loader = DataLoader(train_set, batch_size=None)
     gen_set = NonterminalFeaturesDataset(os.path.join(args.data_dir, 'gen'))
